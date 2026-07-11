@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI-Driven 3D Portfolio | Guava AI</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Three.js via CDN -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <!-- Puter.js via CDN -->
+  <script src="https://js.puter.com/puter.js"></script>
+
+  <style>
+    /* Base styles */
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Custom card styles */
+    .project-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .project-card:hover {
+      transform: scale(1.03);
+      border-color: rgba(74, 222, 128, 0.3);
+      box-shadow: 0 12px 48px rgba(74, 222, 128, 0.1);
+    }
+
+    /* Section cards for About and Contact */
+    .section-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Guava chat styles */
+    .guava-message-user {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(74, 222, 128, 0.3);
+      color: white;
+      text-align: right;
+    }
+
+    .guava-message-bot {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      text-align: left;
+    }
+
+    /* Scrollbar */
+    #guava-messages::-webkit-scrollbar {
+      width: 4px;
+    }
+    #guava-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #guava-messages::-webkit-scrollbar-thumb {
+      background: rgba(74, 222, 128, 0.3);
+      border-radius: 9999px;
+    }
+
+    /* Typing dots animation */
+    .typing-dots::after {
+      content: '...';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+      100% { content: ''; }
+    }
+
+    /* Line clamp for descriptions */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Image placeholder colors */
+    .project-image-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      color: white;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      #guava-panel {
+        width: calc(100% - 2rem);
+        right: 1rem;
+        bottom: 5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D Canvas Container -->
+  <div id="three-container" style="position: fixed; inset: 0; z-index: 0; pointer-events: none;"></div>
+
+  <!-- Navbar -->
+  <nav style="position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.05);">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <span style="font-size: 1.5rem;">🚀</span>
+      <span style="font-weight: bold; font-size: 1.25rem; letter-spacing: -0.02em;">Portfolio<span style="color: #4ade80;">AI</span></span>
+    </div>
+    <div id="nav-links" style="display: flex; gap: 1.5rem; font-size: 0.875rem; color: #9ca3af;">
+      <a href="#projects" style="color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'">Projects</a>
+      <a href="#about" style="color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'">About</a>
+      <a href="#contact" style="color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'">Contact</a>
+    </div>
+    <button id="mobile-menu-btn" style="display: none; font-size: 1.5rem; background: none; border: none; color: white; cursor: pointer;">☰</button>
+  </nav>
+
+  <!-- Mobile menu fallback -->
+  <div id="mobile-menu" style="display: none; position: relative; z-index: 10; background: rgba(15, 23, 42, 0.95); padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); flex-direction: column; gap: 0.75rem;">
+    <a href="#projects" style="color: #e2e8f0; text-decoration: none;">Projects</a>
+    <a href="#about" style="color: #e2e8f0; text-decoration: none;">About</a>
+    <a href="#contact" style="color: #e2e8f0; text-decoration: none;">Contact</a>
+  </div>
+
+  <!-- Hero Section -->
+  <section style="position: relative; z-index: 10; padding: 5rem 1.5rem 3rem; text-align: center;">
+    <h1 class="hero-title" style="font-size: 3.5rem; font-weight: 800; background: linear-gradient(to right, #86efac, #93c5fd, #c4b5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: pulse 3s ease-in-out infinite;">
+      Build. Deploy. Innovate.
+    </h1>
+    <p style="margin-top: 1rem; font-size: 1.125rem; color: #d1d5db; max-width: 42rem; margin-left: auto; margin-right: auto;">
+      Explore my projects through an immersive 3D experience. Ask <span style="color: #4ade80; font-weight: 600;">Guava</span> AI anything.
+    </p>
+  </section>
+
+  <!-- Project Grid -->
+  <section id="projects" style="position: relative; z-index: 10; padding: 0 1.5rem 3rem;">
+    <h2 style="font-size: 1.875rem; font-weight: bold; text-align: center; margin-bottom: 2rem;">My Projects</h2>
+    <div id="project-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; max-width: 72rem; margin: 0 auto;">
+      <!-- Cards injected by JavaScript -->
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" style="position: relative; z-index: 10; padding: 3rem 1.5rem;">
+    <div style="max-width: 72rem; margin: 0 auto;">
+      <h2 style="font-size: 1.875rem; font-weight: bold; text-align: center; margin-bottom: 2rem;">About Me</h2>
+      <div class="section-card" style="max-width: 48rem; margin: 0 auto;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+          <div style="width: 8rem; height: 8rem; border-radius: 50%; background: linear-gradient(135deg, #4ade80, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+            👨‍💻
+          </div>
+          <div style="text-align: center;">
+            <h3 style="font-size: 1.5rem; font-weight: bold;">John Doe</h3>
+            <p style="color: #4ade80; font-weight: 500;">Full-Stack Developer & AI Enthusiast</p>
+          </div>
+          <div style="color: #d1d5db; line-height: 1.7;">
+            <p>
+              I'm a passionate software engineer with expertise in building modern web applications, 
+              AI-powered solutions, and immersive 3D experiences. With 5+ years of experience in 
+              full-stack development, I love combining cutting-edge technologies with clean, 
+              maintainable code.
+            </p>
+            <p style="margin-top: 1rem;">
+              My tech stack includes <strong style="color: white;">JavaScript, Python, React, Node.js, Three.js,</strong> 
+              and <strong style="color: white;">AI/ML frameworks</strong>. I'm constantly exploring new 
+              technologies and pushing the boundaries of what's possible on the web.
+            </p>
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+            <span style="background: rgba(255,255,255,0.1); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem;">📍 Nigeria</span>
+            <span style="background: rgba(255,255,255,0.1); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem;">🎓 Computer Science</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" style="position: relative; z-index: 10; padding: 3rem 1.5rem 5rem;">
+    <div style="max-width: 48rem; margin: 0 auto;">
+      <h2 style="font-size: 1.875rem; font-weight: bold; text-align: center; margin-bottom: 2rem;">Get In Touch</h2>
+      <div class="section-card">
+        <form id="contact-form" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.875rem; color: #9ca3af; margin-bottom: 0.25rem;">Name</label>
+              <input type="text" id="contact-name" placeholder="Your name" required style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.75rem; color: white; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(74,222,128,0.3)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.875rem; color: #9ca3af; margin-bottom: 0.25rem;">Email</label>
+              <input type="email" id="contact-email" placeholder="your@email.com" required style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.75rem; color: white; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(74,222,128,0.3)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+            </div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.875rem; color: #9ca3af; margin-bottom: 0.25rem;">Message</label>
+            <textarea id="contact-message" placeholder="Your message..." rows="4" required style="width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.75rem; color: white; outline: none; resize: vertical; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(74,222,128,0.3)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"></textarea>
+          </div>
+          <button type="submit" style="background: #16a34a; color: white; padding: 0.75rem; border-radius: 0.5rem; font-weight: 500; border: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#22c55e'" onmouseout="this.style.background='#16a34a'">
+            Send Message ✉️
+          </button>
+          <div id="form-status" style="text-align: center; font-size: 0.875rem; color: #86efac; display: none;"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Guava Chatbot -->
+  <div id="guava-container" style="position: relative; z-index: 50;">
+    <!-- Trigger Button -->
+    <button id="guava-trigger" style="position: fixed; bottom: 1.5rem; right: 1.5rem; background: linear-gradient(to right, #16a34a, #22c55e); color: white; padding: 1rem; border-radius: 9999px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; border: none; cursor: pointer; z-index: 51;">
+      <span style="font-size: 1.5rem;">🐢</span>
+      <span style="font-size: 0.875rem; font-weight: 500; display: none;">Guava</span>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="guava-panel" style="display: none; position: fixed; bottom: 5rem; right: 1.5rem; width: 20rem; max-width: calc(100% - 3rem); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; box-shadow: 0 16px 64px rgba(0,0,0,0.6); flex-direction: column; overflow: hidden; z-index: 52;">
+      <!-- Header -->
+      <div style="background: rgba(74, 222, 128, 0.15); padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.5rem;">🐢</span>
+          <span style="font-weight: bold; color: white;">Guava</span>
+          <span id="guava-status" style="font-size: 0.75rem; color: #fbbf24;">● Connecting...</span>
+        </div>
+        <button id="guava-close" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'">✕</button>
+      </div>
+
+      <!-- Messages -->
+      <div id="guava-messages" style="height: 16rem; overflow-y: auto; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
+        <!-- Messages injected by JavaScript -->
+        <div style="text-align: left; margin-bottom: 0.5rem;">
+          <span class="guava-message-bot">🐢 Hi! I'm Guava. Ask me anything about the projects, skills, or technologies!</span>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div style="padding: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05);">
+        <!-- Quick replies -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <button class="quick-reply" style="background: rgba(255,255,255,0.08); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; color: #d1d5db; border: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">Tell me about your skills</button>
+          <button class="quick-reply" style="background: rgba(255,255,255,0.08); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; color: #d1d5db; border: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">Show me your best project</button>
+          <button class="quick-reply" style="background: rgba(255,255,255,0.08); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; color: #d1d5db; border: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">What tech stack do you use?</button>
+        </div>
+        <!-- Input + Send -->
+        <div style="display: flex; gap: 0.5rem;">
+          <input id="guava-input" type="text" placeholder="Ask Guava anything..." style="flex: 1; background: rgba(255,255,255,0.08); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: white; outline: none; border: 1px solid transparent; transition: border-color 0.2s;" onfocus="this.style.borderColor='rgba(74,222,128,0.3)'" onblur="this.style.borderColor='transparent'">
+          <button id="guava-send" style="background: #16a34a; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; border: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#22c55e'" onmouseout="this.style.background='#16a34a'">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer style="position: relative; z-index: 10; text-align: center; padding: 1.5rem; font-size: 0.875rem; color: #6b7280; border-top: 1px solid rgba(255,255,255,0.05);">
+    © 2026 AI-Driven 3D Portfolio | Powered by <span style="color: #4ade80;">Guava AI</span>
+  </footer>
+
+  <!-- =============== JAVASCRIPT =============== -->
+  <script type="module">
+    // --- IMPORTS ---
+    import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+    // --- PROJECT DATA (with built-in placeholder colors and emojis) ---
+    const projects = [
+      {
+        id: 1,
+        title: "AI Portfolio System",
+        emoji: "🤖",
+        color: "#4ade80",
+        tags: "Three.js • Vanilla JS • AI",
+        description: "An interactive 3D portfolio with AI-driven conversational assistant. Built with vanilla JavaScript for performance.",
+        github: "https://github.com/yourusername/ai-portfolio",
+        demo: "https://ai-portfolio-demo.com"
+      },
+      {
+        id: 2,
+        title: "E-Commerce Dashboard",
+        emoji: "🛒",
+        color: "#60a5fa",
+        tags: "React • Node.js • MongoDB",
+        description: "Full-stack e-commerce dashboard with real-time analytics, inventory management, and order tracking.",
+        github: "https://github.com/yourusername/ecommerce-dashboard",
+        demo: "https://ecommerce-demo.com"
+      },
+      {
+        id: 3,
+        title: "Weather AI Predictor",
+        emoji: "🌤️",
+        color: "#fbbf24",
+        tags: "Python • TensorFlow • Flask",
+        description: "Machine learning model that predicts local weather patterns using historical data and satellite imagery.",
+        github: "https://github.com/yourusername/weather-ai",
+        demo: "https://weather-ai-demo.com"
+      },
+      {
+        id: 4,
+        title: "TaskFlow Productivity",
+        emoji: "✅",
+        color: "#f472b6",
+        tags: "Vue.js • Firebase • Tailwind",
+        description: "Collaborative task management tool with real-time updates, team workspaces, and AI-powered prioritization.",
+        github: "https://github.com/yourusername/taskflow",
+        demo: "https://taskflow-demo.com"
+      },
+      {
+        id: 5,
+        title: "NFT Marketplace UI",
+        emoji: "🎨",
+        color: "#a78bfa",
+        tags: "Next.js • Web3 • Ethers.js",
+        description: "Modern NFT marketplace interface with wallet integration, bidding system, and real-time price charts.",
+        github: "https://github.com/yourusername/nft-marketplace",
+        demo: "https://nft-marketplace-demo.com"
+      },
+      {
+        id: 6,
+        title: "HealthTrack Mobile",
+        emoji: "❤️",
+        color: "#fb7185",
+        tags: "React Native • Expo • Firebase",
+        description: "Cross-platform health tracking app with workout logs, nutrition planning, and AI fitness recommendations.",
+        github: "https://github.com/yourusername/healthtrack",
+        demo: "https://healthtrack-demo.com"
+      }
+    ];
+
+    // --- 3D AMBIENT SCENE ---
+    function initAmbientScene() {
+      const container = document.getElementById('three-container');
+      if (!container) return;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+      scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(5, 5, 5);
+      scene.add(dirLight);
+      const backLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+      backLight.position.set(-5, 0, -5);
+      scene.add(backLight);
+
+      // Particles
+      const particleCount = 800;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount * 3; i++) {
+        positions[i] = (Math.random() - 0.5) * 30;
+        colors[i] = Math.random() * 0.5 + 0.5;
+      }
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const material = new THREE.PointsMaterial({
+        size: 0.05,
+        transparent: true,
+        opacity: 0.4,
+        vertexColors: true,
+        blending: THREE.AdditiveBlending
+      });
+      const particles = new THREE.Points(geometry, material);
+      scene.add(particles);
+
+      // Subtle torus
+      const torusGeo = new THREE.TorusGeometry(2, 0.1, 16, 100);
+      const torusMat = new THREE.MeshBasicMaterial({ color: 0x44ff88, transparent: true, opacity: 0.1, wireframe: true });
+      const torus = new THREE.Mesh(torusGeo, torusMat);
+      torus.position.z = -5;
+      scene.add(torus);
+
+      camera.position.z = 8;
+
+      let time = 0;
+      function animate() {
+        requestAnimationFrame(animate);
+        time += 0.001;
+        particles.rotation.y += 0.0003;
+        particles.rotation.x += 0.0001;
+        torus.rotation.x += 0.002;
+        torus.rotation.y += 0.003;
+        camera.position.x = Math.sin(time * 0.1) * 0.5;
+        camera.position.y = Math.sin(time * 0.15) * 0.3;
+        camera.lookAt(0, 0, 0);
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    // --- RENDER CARDS (with placeholder images) ---
+    function renderCards() {
+      const grid = document.getElementById('project-grid');
+      if (!grid) return;
+
+      grid.innerHTML = projects.map(p => `
+        <div class="project-card" data-id="${p.id}">
+          <div style="position: relative; overflow: hidden; height: 12rem;">
+            <div class="project-image-placeholder" style="background: ${p.color};">
+              ${p.emoji}
+            </div>
+            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.8), transparent);"></div>
+          </div>
+          <div style="padding: 1.25rem;">
+            <h3 style="font-size: 1.25rem; font-weight: bold; color: white;">${p.title}</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+              ${p.tags.split('•').map(tag => `<span style="font-size: 0.75rem; background: rgba(255,255,255,0.08); padding: 0.125rem 0.5rem; border-radius: 9999px; color: #d1d5db;">${tag.trim()}</span>`).join('')}
+            </div>
+            <p style="font-size: 0.875rem; color: #9ca3af; margin-top: 0.5rem; line-clamp: 2;">${p.description}</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+              <div style="display: flex; gap: 0.75rem;">
+                <a href="${p.github}" target="_blank" style="font-size: 0.75rem; color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'">📂 Code</a>
+                <a href="${p.demo}" target="_blank" style="font-size: 0.75rem; color: #9ca3af; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'">🚀 Demo</a>
+              </div>
+              <button class="guava-quick-btn" data-project="${p.title}" style="background: rgba(74,222,128,0.15); color: #86efac; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.25rem;" onmouseover="this.style.background='rgba(74,222,128,0.3)'" onmouseout="this.style.background='rgba(74,222,128,0.15)'">
+                🐢 Ask Guava
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Attach event listeners for "Ask Guava" buttons
+      document.querySelectorAll('.guava-quick-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const projectTitle = this.dataset.project;
+          if (window.guava) {
+            const reply = await window.guava.quickAskAboutProject(projectTitle);
+            addGuavaMessage('guava', reply);
+            const panel = document.getElementById('guava-panel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+              panel.style.display = 'flex';
+            }
+          }
+        });
+      });
+    }
+
+    // --- GUAVA AI CLASS (Puter.js + Offline Fallback) ---
+    class Guava {
+      constructor() {
+        this.isReady = false;
+        this.isProcessing = false;
+        this.conversationHistory = [];
+        this.usePuter = false;
+        this.puter = null;
+        
+        // Comprehensive offline response database
+        this.responses = {
+          'skills': "I specialize in JavaScript, Python, React, Node.js, Three.js, and AI/ML frameworks. I love building full-stack applications and immersive 3D experiences! 🚀",
+          'best project': "My AI Portfolio System is my best project—it combines Three.js 3D rendering with an AI conversational assistant, all in vanilla JavaScript! It's fast, lightweight, and fully interactive.",
+          'tech stack': "I use JavaScript, Python, React, Node.js, Three.js, Tailwind CSS, and various AI/ML tools. I prefer vanilla JS for performance-critical apps.",
+          'hello': "Hello! 🐢 I'm Guava, your AI assistant. Ask me about my projects, skills, or anything else!",
+          'hi': "Hi there! 🐢 I'm Guava. Feel free to ask me anything about my work!",
+          'hey': "Hey! 🐢 Guava here. What can I help you with today?",
+          'portfolio': "This portfolio is built with Three.js for 3D rendering, Tailwind CSS for styling, and a custom AI assistant named Guava. It's 100% vanilla JavaScript!",
+          'experience': "I have 5+ years of full-stack development experience, working on web applications, AI solutions, and interactive 3D experiences.",
+          'contact': "You can reach me through the contact form below, or email me at john@example.com. I'm always open to new opportunities!",
+          'default': "I'm a full-stack developer passionate about AI and 3D web experiences. Check out my projects above! Feel free to ask me anything specific. 🐢"
+        };
+
+        // Project-specific responses
+        this.projectResponses = {};
+        projects.forEach(p => {
+          this.projectResponses[p.title.toLowerCase()] = 
+            `The ${p.title} project uses ${p.tags}. ${p.description}`;
+        });
+      }
+
+      async init() {
+        // Try to initialize Puter.js
+        try {
+          if (typeof window.puter !== 'undefined' && window.puter.chat) {
+            this.puter = window.puter;
+            this.usePuter = true;
+            this.isReady = true;
+            document.getElementById('guava-status').textContent = '● Online (AI Mode)';
+            document.getElementById('guava-status').style.color = '#86efac';
+            console.log('🐢 Guava connected to Puter.js!');
+            return true;
+          } else {
+            // Puter not available, use fallback
+            this.usePuter = false;
+            this.isReady = true;
+            document.getElementById('guava-status').textContent = '● Online (Fallback Mode)';
+            document.getElementById('guava-status').style.color = '#fbbf24';
+            console.log('🐢 Guava running in fallback mode');
+            return true;
+          }
+        } catch (error) {
+          console.log('Puter.js not available, using fallback mode');
+          this.usePuter = false;
+          this.isReady = true;
+          document.getElementById('guava-status').textContent = '● Online (Fallback Mode)';
+          document.getElementById('guava-status').style.color = '#fbbf24';
+          return true;
+        }
+      }
+
+      async ask(query, context = '') {
+        if (!this.isReady) {
+          await this.init();
+        }
+
+        if (this.isProcessing) return "🐢 Guava is thinking... please wait a moment.";
+        
+        this.isProcessing = true;
+        this.conversationHistory.push({ role: 'user', content: query });
+
+        let response = '';
+
+        // Try Puter.js first
+        if (this.usePuter && this.puter) {
+          try {
+            const messages = [
+              { role: 'system', content: context || "You are Guava, a helpful AI assistant for a portfolio." },
+              ...this.conversationHistory.slice(-6)
+            ];
+            const result = await this.puter.chat(messages);
+            if (result && result.length > 0) {
+              response = result;
+            } else {
+              response = this.getFallbackResponse(query);
+            }
+          } catch (error) {
+            console.log('Puter.js error, using fallback:', error);
+            response = this.getFallbackResponse(query);
+          }
+        } else {
+          // Use fallback
+          response = this.getFallbackResponse(query);
+        }
+
+        this.conversationHistory.push({ role: 'assistant', content: response });
+        this.isProcessing = false;
+        return response;
+      }
+
+      getFallbackResponse(query) {
+        const lower = query.toLowerCase();
+        
+        // Check for project mentions
+        for (const [title, response] of Object.entries(this.projectResponses)) {
+          if (lower.includes(title)) {
+            return response;
+          }
+        }
+
+        // Check for keywords
+        if (lower.includes('skill') || lower.includes('technologies') || lower.includes('tech')) {
+          return this.responses['skills'];
+        } else if (lower.includes('best') || lower.includes('favorite') || lower.includes('top project')) {
+          return this.responses['best project'];
+        } else if (lower.includes('stack') || lower.includes('framework') || lower.includes('language')) {
+          return this.responses['tech stack'];
+        } else if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+          return this.responses['hello'];
+        } else if (lower.includes('portfolio') || lower.includes('website')) {
+          return this.responses['portfolio'];
+        } else if (lower.includes('experience') || lower.includes('year')) {
+          return this.responses['experience'];
+        } else if (lower.includes('contact') || lower.includes('email') || lower.includes('reach')) {
+          return this.responses['contact'];
+        } else if (lower.includes('project')) {
+          return "I have several projects! Check out my AI Portfolio System, E-Commerce Dashboard, or Weather AI Predictor. Which one interests you? 🚀";
+        } else {
+          return this.responses['default'];
+        }
+      }
+
+      async quickAskAboutProject(projectTitle) {
+        const context = `The user is asking about the "${projectTitle}" project. Provide a brief overview, tech stack, and what makes it special.`;
+        return this.ask(`Tell me about the ${projectTitle} project.`, context);
+      }
+
+      clearHistory() {
+        this.conversationHistory = [];
+      }
+    }
+
+    // --- GUAVA UI ---
+    let guavaInstance = null;
+
+    function initGuavaUI() {
+      const trigger = document.getElementById('guava-trigger');
+      const panel = document.getElementById('guava-panel');
+      const closeBtn = document.getElementById('guava-close');
+      const input = document.getElementById('guava-input');
+      const sendBtn = document.getElementById('guava-send');
+      const quickReplies = document.querySelectorAll('.quick-reply');
+
+      // Initialize Guava
+      guavaInstance = new Guava();
+      window.guava = guavaInstance;
+      
+      // Initialize and show status
+      guavaInstance.init().then(ready => {
+        if (ready) {
+          console.log('🐢 Guava is ready!');
+        }
+      });
+
+      // Toggle panel
+      trigger.addEventListener('click', () => {
+        if (panel.style.display === 'none' || panel.style.display === '') {
+          panel.style.display = 'flex';
+          input.focus();
+        } else {
+          panel.style.display = 'none';
+        }
+      });
+
+      closeBtn.addEventListener('click', () => {
+        panel.style.display = 'none';
+      });
+
+      // Send message
+      async function sendMessage() {
+        const text = input.value.trim();
+        if (!text || !guavaInstance) return;
+
+        addGuavaMessage('user', text);
+        input.value = '';
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        const typingId = addTypingIndicator();
+
+        const response = await guavaInstance.ask(text);
+
+        removeTypingIndicator(typingId);
+        addGuavaMessage('guava', response);
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }
+
+      sendBtn.addEventListener('click', sendMessage);
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+
+      // Quick replies
+      quickReplies.forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!guavaInstance) return;
+          const text = btn.textContent.trim();
+          addGuavaMessage('user', text);
+          const typingId = addTypingIndicator();
+          const response = await guavaInstance.ask(text);
+          removeTypingIndicator(typingId);
+          addGuavaMessage('guava', response);
+        });
+      });
+    }
+
+    // Helper: Add message to chat
+    function addGuavaMessage(role, text) {
+      const container = document.getElementById('guava-messages');
+      if (!container) return;
+      const div = document.createElement('div');
+      div.style.textAlign = role === 'user' ? 'right' : 'left';
+      div.style.marginBottom = '0.5rem';
+      div.innerHTML = `
+        <span class="${role === 'user' ? 'guava-message-user' : 'guava-message-bot'}">
+          ${role === 'guava' ? '🐢 ' : ''}${text}
+        </span>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Helper: Typing indicator
+    function addTypingIndicator() {
+      const container = document.getElementById('guava-messages');
+      if (!container) return null;
+      const id = 'typing-' + Date.now();
+      const div = document.createElement('div');
+      div.id = id;
+      div.style.textAlign = 'left';
+      div.style.marginBottom = '0.5rem';
+      div.innerHTML = `
+        <span class="guava-message-bot" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+          🐢 <span class="typing-dots"></span>
+        </span>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return id;
+    }
+
+    function removeTypingIndicator(id) {
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    // --- CONTACT FORM ---
+    document.getElementById('contact-form')?.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('contact-name').value;
+      const email = document.getElementById('contact-email').value;
+      const message = document.getElementById('contact-message').value;
+      const status = document.getElementById('form-status');
+      
+      status.style.display = 'block';
+      status.textContent = '📨 Thanks ' + name + '! Your message has been sent. I\'ll get back to you soon!';
+      status.style.color = '#86efac';
+      
+      // Reset form
+      this.reset();
+      
+      // Hide status after 5 seconds
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 5000);
+    });
+
+    // --- MOBILE MENU ---
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+      const menu = document.getElementById('mobile-menu');
+      if (menu.style.display === 'none' || menu.style.display === '') {
+        menu.style.display = 'flex';
+      } else {
+        menu.style.display = 'none';
+      }
+    });
+
+    // --- RESPONSIVE GRID ---
+    function updateGrid() {
+      const grid = document.getElementById('project-grid');
+      if (window.innerWidth >= 1024) {
+        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+      } else if (window.innerWidth >= 768) {
+        grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+      } else {
+        grid.style.gridTemplateColumns = '1fr';
+      }
+    }
+    window.addEventListener('resize', updateGrid);
+
+    // --- INIT ---
+    initAmbientScene();
+    renderCards();
+    initGuavaUI();
+    updateGrid();
+
+    // Console greeting
+    console.log('🚀 AI-Driven 3D Portfolio loaded!');
+    console.log('🐢 Ask Guava anything about the projects.');
+
+    // Make addGuavaMessage globally accessible for card buttons
+    window.addGuavaMessage = addGuavaMessage;
+
+  </script>
+</body>
+</html>
