@@ -21,6 +21,9 @@
   <!-- Puter.js via CDN -->
   <script src="https://js.puter.com/puter.js"></script>
 
+  <!-- EmailJS via CDN -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
   <style>
     /* Base styles */
     body {
@@ -115,15 +118,15 @@
       scroll-behavior: smooth;
     }
 
-    /* Image placeholder colors */
-    .project-image-placeholder {
+    /* Card image styling */
+    .card-image {
       width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
-      color: white;
+      height: 12rem;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+    .card-image:hover {
+      transform: scale(1.05);
     }
 
     /* Responsive adjustments */
@@ -302,13 +305,12 @@
     // --- IMPORTS ---
     import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
-    // --- PROJECT DATA (with built-in placeholder colors and emojis) ---
+    // --- PROJECT DATA (with REAL image URLs) ---
     const projects = [
       {
         id: 1,
         title: "AI Portfolio System",
-        emoji: "🤖",
-        color: "#4ade80",
+        image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=300&fit=crop",
         tags: "Three.js • Vanilla JS • AI",
         description: "An interactive 3D portfolio with AI-driven conversational assistant. Built with vanilla JavaScript for performance.",
         github: "https://github.com/yourusername/ai-portfolio",
@@ -317,8 +319,7 @@
       {
         id: 2,
         title: "E-Commerce Dashboard",
-        emoji: "🛒",
-        color: "#60a5fa",
+        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop",
         tags: "React • Node.js • MongoDB",
         description: "Full-stack e-commerce dashboard with real-time analytics, inventory management, and order tracking.",
         github: "https://github.com/yourusername/ecommerce-dashboard",
@@ -327,8 +328,7 @@
       {
         id: 3,
         title: "Weather AI Predictor",
-        emoji: "🌤️",
-        color: "#fbbf24",
+        image: "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=400&h=300&fit=crop",
         tags: "Python • TensorFlow • Flask",
         description: "Machine learning model that predicts local weather patterns using historical data and satellite imagery.",
         github: "https://github.com/yourusername/weather-ai",
@@ -337,8 +337,7 @@
       {
         id: 4,
         title: "TaskFlow Productivity",
-        emoji: "✅",
-        color: "#f472b6",
+        image: "https://images.unsplash.com/photo-1484480974693-6bb0f8053e61?w=400&h=300&fit=crop",
         tags: "Vue.js • Firebase • Tailwind",
         description: "Collaborative task management tool with real-time updates, team workspaces, and AI-powered prioritization.",
         github: "https://github.com/yourusername/taskflow",
@@ -347,8 +346,7 @@
       {
         id: 5,
         title: "NFT Marketplace UI",
-        emoji: "🎨",
-        color: "#a78bfa",
+        image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&h=300&fit=crop",
         tags: "Next.js • Web3 • Ethers.js",
         description: "Modern NFT marketplace interface with wallet integration, bidding system, and real-time price charts.",
         github: "https://github.com/yourusername/nft-marketplace",
@@ -357,8 +355,7 @@
       {
         id: 6,
         title: "HealthTrack Mobile",
-        emoji: "❤️",
-        color: "#fb7185",
+        image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&h=300&fit=crop",
         tags: "React Native • Expo • Firebase",
         description: "Cross-platform health tracking app with workout logs, nutrition planning, and AI fitness recommendations.",
         github: "https://github.com/yourusername/healthtrack",
@@ -440,7 +437,7 @@
       });
     }
 
-    // --- RENDER CARDS (with placeholder images) ---
+    // --- RENDER CARDS (with REAL images) ---
     function renderCards() {
       const grid = document.getElementById('project-grid');
       if (!grid) return;
@@ -448,9 +445,7 @@
       grid.innerHTML = projects.map(p => `
         <div class="project-card" data-id="${p.id}">
           <div style="position: relative; overflow: hidden; height: 12rem;">
-            <div class="project-image-placeholder" style="background: ${p.color};">
-              ${p.emoji}
-            </div>
+            <img src="${p.image}" alt="${p.title}" class="card-image">
             <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,23,42,0.8), transparent);"></div>
           </div>
           <div style="padding: 1.25rem;">
@@ -747,25 +742,79 @@
       if (el) el.remove();
     }
 
-    // --- CONTACT FORM ---
+    // --- CONTACT FORM WITH EMAILJS ---
     document.getElementById('contact-form')?.addEventListener('submit', function(e) {
       e.preventDefault();
+      
       const name = document.getElementById('contact-name').value;
       const email = document.getElementById('contact-email').value;
       const message = document.getElementById('contact-message').value;
       const status = document.getElementById('form-status');
       
+      // Validate all fields
+      if (!name || !email || !message) {
+        status.style.display = 'block';
+        status.textContent = '❌ Please fill in all fields.';
+        status.style.color = '#ef4444';
+        return;
+      }
+
+      // Initialize EmailJS with your Public Key
+      emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
+
+      // Prepare template parameters for user confirmation
+      const userTemplateParams = {
+        to_name: name,
+        to_email: email,
+        from_name: "Portfolio System",
+        message: "Thank you for contacting us! We have received your message and will get back to you shortly."
+      };
+
+      // Prepare template parameters for CEO/MD alert
+      const adminTemplateParams = {
+        to_name: "CEO/MD",
+        to_email: "ceo@example.com", // Replace with actual CEO email
+        from_name: name,
+        from_email: email,
+        message: message,
+        client_name: name,
+        client_email: email,
+        client_message: message
+      };
+
+      // Show loading state
       status.style.display = 'block';
-      status.textContent = '📨 Thanks ' + name + '! Your message has been sent. I\'ll get back to you soon!';
-      status.style.color = '#86efac';
-      
-      // Reset form
-      this.reset();
-      
-      // Hide status after 5 seconds
-      setTimeout(() => {
-        status.style.display = 'none';
-      }, 5000);
+      status.textContent = '⏳ Sending your message...';
+      status.style.color = '#fbbf24';
+
+      // Send confirmation email to user
+      emailjs.send("YOUR_SERVICE_ID", "YOUR_USER_TEMPLATE_ID", userTemplateParams)
+        .then(function(response) {
+          console.log('User confirmation email sent:', response.status, response.text);
+          
+          // Send alert email to CEO/MD
+          return emailjs.send("YOUR_SERVICE_ID", "YOUR_ADMIN_TEMPLATE_ID", adminTemplateParams);
+        })
+        .then(function(response) {
+          console.log('CEO/MD alert email sent:', response.status, response.text);
+          
+          // Show success message
+          status.textContent = `✅ Thanks ${name}! A confirmation email has been sent to your inbox. The CEO/MD has also been notified.`;
+          status.style.color = '#86efac';
+          
+          // Reset form
+          document.getElementById('contact-form').reset();
+          
+          // Hide status after 5 seconds
+          setTimeout(() => {
+            status.style.display = 'none';
+          }, 5000);
+        })
+        .catch(function(error) {
+          console.error('EmailJS error:', error);
+          status.textContent = '❌ Failed to send message. Please try again later.';
+          status.style.color = '#ef4444';
+        });
     });
 
     // --- MOBILE MENU ---
