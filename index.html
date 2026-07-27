@@ -773,7 +773,7 @@
       // Prepare template parameters for CEO/MD alert
       const adminTemplateParams = {
         to_name: "CEO/MD",
-        to_email: "ceo@example.com", // Replace with actual CEO email
+        to_email: "suliaman55019@gmail.com", // Replace with actual CEO email
         from_name: name,
         from_email: email,
         message: message,
@@ -788,12 +788,12 @@
       status.style.color = '#fbbf24';
 
       // Send confirmation email to user
-      emailjs.send("YOUR_SERVICE_ID", "YOUR_USER_TEMPLATE_ID", userTemplateParams)
+      emailjs.send("service_gnp2oxt", "template_ldzutxc", userTemplateParams)
         .then(function(response) {
           console.log('User confirmation email sent:', response.status, response.text);
           
           // Send alert email to CEO/MD
-          return emailjs.send("YOUR_SERVICE_ID", "YOUR_ADMIN_TEMPLATE_ID", adminTemplateParams);
+          return emailjs.send("service_gnp2oxt", "YOUR_ADMIN_TEMPLATE_ID", adminTemplateParams);
         })
         .then(function(response) {
           console.log('CEO/MD alert email sent:', response.status, response.text);
