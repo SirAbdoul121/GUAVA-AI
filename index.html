@@ -22,7 +22,7 @@
     <!-- Puter.js -->
     <script src="https://js.puter.com/puter.js"></script>
 
-    <!-- EmailJS -->
+    <!-- EmailJS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
@@ -2247,7 +2247,7 @@
     </script>
 
     <script type="module">
-        // ===== THREE.JS 3D AMBIENT SCENE (FROM YOUR CODE) =====
+        // ===== THREE.JS 3D AMBIENT SCENE =====
         import * as THREE from 'three';
 
         function initAmbientScene() {
@@ -2625,49 +2625,52 @@
         }, { threshold: 0.4 });
         if (statNumbers.length > 0) counterObserver.observe(statNumbers[0].closest('.about-stats'));
 
-        // ===== CONTACT FORM =====
+        // ===== CONTACT FORM WITH YOUR EMAIL.JS FILE =====
         const contactForm = document.getElementById('contactForm');
-        const formSuccess = document.getElementById('formSuccess');
-
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const message = document.getElementById('message').value.trim();
-
-            if (!name || !email || !message) {
-                alert('Please fill in all required fields (Name, Email, and Message).');
-                return;
-            }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-
-            const submitBtn = contactForm.querySelector('.submit-btn');
-            const originalHTML = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-            submitBtn.disabled = true;
-
-            // Simulate sending
-            setTimeout(() => {
-                contactForm.style.display = 'none';
-                formSuccess.classList.add('show');
-                console.log('Form Submitted:', {
-                    name, email,
-                    phone: document.getElementById('phone').value,
-                    service: document.getElementById('service').value,
-                    message
-                });
-                setTimeout(() => {
+        
+        if (contactForm) {
+            contactForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const formData = {
+                    name: document.getElementById('name')?.value?.trim() || '',
+                    email: document.getElementById('email')?.value?.trim() || '',
+                    phone: document.getElementById('phone')?.value?.trim() || '',
+                    service: document.getElementById('service')?.value || '',
+                    message: document.getElementById('message')?.value?.trim() || ''
+                };
+                
+                // Validate
+                const errors = validateForm(formData.name, formData.email, formData.message);
+                if (errors.length > 0) {
+                    showNotification(errors[0], 'warning');
+                    return;
+                }
+                
+                // Get button
+                const submitBtn = contactForm.querySelector('.submit-btn') || contactForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : '';
+                
+                if (submitBtn) {
+                    submitBtn.innerHTML = '⏳ Sending...';
+                    submitBtn.disabled = true;
+                }
+                
+                try {
+                    await sendContactEmails(formData);
+                    showNotification('✅ Message sent! Check your email.', 'success');
                     contactForm.reset();
-                    contactForm.style.display = 'block';
-                    formSuccess.classList.remove('show');
-                    submitBtn.innerHTML = originalHTML;
-                    submitBtn.disabled = false;
-                }, 5000);
-            }, 1500);
-        });
+                } catch (error) {
+                    console.error('❌ Error:', error);
+                    showNotification('Failed to send. Contact us:\n📧 ' + COMPANY.ceoEmail + '\n📞 ' + COMPANY.ceoPhone, 'error');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }
+                }
+            });
+        }
 
         // ===== KEYBOARD ACCESSIBILITY =====
         document.addEventListener('keydown', (e) => {
@@ -2691,34 +2694,33 @@
         console.log('✨ 3D Ambient Scene running!');
     </script>
 
-    <!-- ===== EMAILJS INITIALIZATION ===== -->
+    <!-- ===== YOUR EXACT EMAIL.JS FILE (Inlined) ===== -->
     <script>
-        // EmailJS Configuration
+        // =============================================
+        // 3D PORTFOLIO
+        // COMPLETE EMAIL SYSTEM
+        // =============================================
+
+        // Email Configuration
         const EMAIL_CONFIG = {
-            publicKey: '8TaF8OU_TOhpCT2FW',
-            serviceId: 'service_gnp2oxt',
-            ceoTemplateId: 'template_b1x3ge4',
-            clientTemplateId: 'template_ldzutxc'
+            publicKey: 'VPQasViIF-713bzM7',
+            serviceId: 'service_sy7g4gw',
+            ceoTemplateId: 'template_ja1r9pd',
+            clientTemplateId: 'template_hx54yys'
         };
 
         // Initialize EmailJS
-        if (typeof emailjs !== 'undefined') {
-            emailjs.init(EMAIL_CONFIG.publicKey);
-            console.log('✅ EmailJS Initialized');
-            console.log('📧 Service:', EMAIL_CONFIG.serviceId);
-        } else {
-            console.error('❌ EmailJS library not loaded!');
-        }
-
-        // Company Information
-        const COMPANY = {
-            ceoName: 'Sulaiman Sa\'eed Sulaiman',
-            ceoEmail: 'm.amusa2023@gmail.com',
-            ceoPhone: '+234 904 938 7070',
-            ceoTitle: 'CEO & Founder',
-            companyName: '3D Portfolio',
-            companyWebsite: 'www.3dportfolio.com'
-        };
+        (function() {
+            if (typeof emailjs !== 'undefined') {
+                emailjs.init(EMAIL_CONFIG.publicKey);
+                console.log('✅ EmailJS Initialized');
+                console.log('📧 Service:', EMAIL_CONFIG.serviceId);
+                console.log('📝 CEO Template:', EMAIL_CONFIG.ceoTemplateId);
+                console.log('📝 Client Template:', EMAIL_CONFIG.clientTemplateId);
+            } else {
+                console.error('❌ EmailJS library not loaded!');
+            }
+        })();
 
         // Service Names
         const SERVICE_NAMES = {
@@ -2733,8 +2735,22 @@
             'other': 'Custom Solution'
         };
 
-        // ===== SEND EMAIL FUNCTION =====
+        // Company Information
+        const COMPANY = {
+            ceoName: 'Sulaiman Sa\'eed Sulaiman',
+            ceoEmail: 'm.amusa2023@gmail.com',
+            ceoPhone: '+234 904 938 7070',
+            ceoTitle: 'CEO & Founder',
+            companyName: '3D Portfolio',
+            companyWebsite: 'www.3dportfolio.com',
+            companyAddress: 'Main Business District'
+        };
+
+        // =============================================
+        // SEND EMAIL FUNCTION
+        // =============================================
         async function sendContactEmails(formData) {
+            
             const serviceName = SERVICE_NAMES[formData.service] || formData.service || 'General Inquiry';
             const timestamp = new Date().toLocaleString('en-US', {
                 weekday: 'long',
@@ -2745,11 +2761,17 @@
                 minute: '2-digit'
             });
 
+            console.log('═══════════════════════════════');
             console.log('📤 SENDING EMAILS');
+            console.log('═══════════════════════════════');
             console.log('👤 Name:', formData.name);
             console.log('📧 Email:', formData.email);
+            console.log('📞 Phone:', formData.phone);
+            console.log('🛠️ Service:', serviceName);
 
-            // 1. SEND TO CEO
+            // ===== 1. SEND TO CEO (m.amusa2023@gmail.com) =====
+            console.log('📤 [1/2] Sending to CEO...');
+            
             try {
                 const ceoResult = await emailjs.send(
                     EMAIL_CONFIG.serviceId,
@@ -2763,16 +2785,21 @@
                         service_requested: serviceName,
                         client_message: formData.message,
                         timestamp: timestamp,
+                        subject: 'New Request: ' + serviceName,
                         reply_to: formData.email
                     }
                 );
                 console.log('✅ CEO Email Sent! Status:', ceoResult.status);
             } catch (error) {
-                console.error('❌ CEO Email Failed!', error);
+                console.error('❌ CEO Email Failed!');
+                console.error('Status:', error.status);
+                console.error('Message:', error.text || error.message);
                 throw error;
             }
 
-            // 2. SEND TO CLIENT
+            // ===== 2. SEND TO CLIENT =====
+            console.log('📤 [2/2] Sending to Client:', formData.email);
+            
             try {
                 const clientResult = await emailjs.send(
                     EMAIL_CONFIG.serviceId,
@@ -2782,6 +2809,7 @@
                         to_name: formData.name,
                         from_name: COMPANY.ceoName,
                         from_email: COMPANY.ceoEmail,
+                        reply_to: COMPANY.ceoEmail,
                         service_requested: serviceName,
                         ceo_name: COMPANY.ceoName,
                         ceo_email: COMPANY.ceoEmail,
@@ -2789,77 +2817,74 @@
                         ceo_title: COMPANY.ceoTitle,
                         company_name: COMPANY.companyName,
                         company_website: COMPANY.companyWebsite,
-                        timestamp: timestamp
+                        company_address: COMPANY.companyAddress,
+                        timestamp: timestamp,
+                        subject: 'Thank you for contacting 3D Portfolio'
                     }
                 );
                 console.log('✅ Client Email Sent! Status:', clientResult.status);
             } catch (error) {
-                console.error('❌ Client Email Failed!', error);
+                console.error('❌ Client Email Failed!');
+                console.error('Status:', error.status);
+                console.error('Message:', error.text || error.message);
                 throw error;
             }
 
+            console.log('═══════════════════════════════');
             console.log('🎉 ALL EMAILS SENT SUCCESSFULLY!');
+            console.log('═══════════════════════════════');
+
             return { success: true };
         }
 
-        // ===== OVERRIDE CONTACT FORM WITH EMAILJS =====
-        document.addEventListener('DOMContentLoaded', function() {
-            const contactForm = document.getElementById('contactForm');
-            const formSuccess = document.getElementById('formSuccess');
+        // =============================================
+        // FORM VALIDATION
+        // =============================================
+        function validateForm(name, email, message) {
+            const errors = [];
+            if (!name || name.length < 2) errors.push('Please enter your full name.');
+            if (!email || !email.includes('@') || !email.includes('.')) errors.push('Please enter a valid email address.');
+            if (!message || message.length < 5) errors.push('Please enter your message.');
+            return errors;
+        }
 
-            if (!contactForm) return;
+        // =============================================
+        // NOTIFICATION SYSTEM
+        // =============================================
+        function showNotification(message, type) {
+            const existing = document.querySelector('.email-notification');
+            if (existing) existing.remove();
 
-            contactForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
+            const colors = { success: '#2ecc71', error: '#e74c3c', warning: '#f39c12', info: '#3498db' };
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
 
-                const name = document.getElementById('name').value.trim();
-                const email = document.getElementById('email').value.trim();
-                const phone = document.getElementById('phone').value.trim();
-                const service = document.getElementById('service').value;
-                const message = document.getElementById('message').value.trim();
-
-                // Validate
-                if (!name || !email || !message) {
-                    alert('Please fill in all required fields (Name, Email, and Message).');
-                    return;
+            const notification = document.createElement('div');
+            notification.className = 'email-notification';
+            notification.innerHTML = `
+                <span style="font-size:20px;">${icons[type] || 'ℹ️'}</span>
+                <span style="flex:1;">${message}</span>
+                <button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;">✕</button>
+            `;
+            notification.style.cssText = `
+                position:fixed;top:20px;right:20px;max-width:450px;background:${colors[type] || colors.info};color:white;padding:16px 20px;border-radius:10px;z-index:10000;box-shadow:0 10px 30px rgba(0,0,0,0.3);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:14px;display:flex;align-items:center;gap:12px;animation:slideIn 0.4s ease;
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideOut 0.4s ease forwards';
+                    setTimeout(() => notification.remove(), 400);
                 }
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    alert('Please enter a valid email address.');
-                    return;
-                }
+            }, 8000);
+        }
 
-                const submitBtn = contactForm.querySelector('.submit-btn');
-                const originalHTML = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-                submitBtn.disabled = true;
-
-                try {
-                    await sendContactEmails({
-                        name, email, phone, service, message
-                    });
-
-                    contactForm.style.display = 'none';
-                    formSuccess.classList.add('show');
-
-                    setTimeout(() => {
-                        contactForm.reset();
-                        contactForm.style.display = 'block';
-                        formSuccess.classList.remove('show');
-                        submitBtn.innerHTML = originalHTML;
-                        submitBtn.disabled = false;
-                    }, 5000);
-
-                } catch (error) {
-                    alert('Failed to send message. Please try again or contact us directly at ' + COMPANY.ceoEmail);
-                    submitBtn.innerHTML = originalHTML;
-                    submitBtn.disabled = false;
-                }
-            });
-        });
-
-        console.log('📧 3D Portfolio Email System Ready');
-        console.log('👤 CEO:', COMPANY.ceoName);
-        console.log('📧 CEO Email:', COMPANY.ceoEmail);
+        // Add animations
+        const styleEl = document.createElement('style');
+        styleEl.textContent = `
+            @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+            @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        `;
+        document.head.appendChild(styleEl);
     </script>
 
 </body>
