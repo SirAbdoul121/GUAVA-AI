@@ -2247,7 +2247,7 @@
     </script>
 
     <script type="module">
-        // ===== THREE.JS 3D AMBIENT SCENE WITH GLOWING PARTICLES =====
+        // ===== THREE.JS 3D AMBIENT SCENE (FROM YOUR CODE) =====
         import * as THREE from 'three';
 
         function initAmbientScene() {
@@ -2275,40 +2275,30 @@
             backLight.position.set(-5, 0, -5);
             scene.add(backLight);
 
-            // GLOWING PARTICLES
-            const particleCount = 1200;
+            // Particles
+            const particleCount = 800;
             const geometry = new THREE.BufferGeometry();
             const positions = new Float32Array(particleCount * 3);
             const colors = new Float32Array(particleCount * 3);
-            
             for (let i = 0; i < particleCount * 3; i++) {
                 positions[i] = (Math.random() - 0.5) * 30;
-                colors[i] = Math.random() * 0.4 + 0.6; // bright colors
+                colors[i] = Math.random() * 0.5 + 0.5;
             }
-            
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            
             const material = new THREE.PointsMaterial({
-                size: 0.08,
+                size: 0.05,
                 transparent: true,
-                opacity: 0.6,
+                opacity: 0.4,
                 vertexColors: true,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
+                blending: THREE.AdditiveBlending
             });
-            
             const particles = new THREE.Points(geometry, material);
             scene.add(particles);
 
-            // Subtle wireframe torus
-            const torusGeo = new THREE.TorusGeometry(2, 0.06, 16, 100);
-            const torusMat = new THREE.MeshBasicMaterial({ 
-                color: 0xc8963e, 
-                transparent: true, 
-                opacity: 0.15,
-                wireframe: true 
-            });
+            // Subtle torus
+            const torusGeo = new THREE.TorusGeometry(2, 0.1, 16, 100);
+            const torusMat = new THREE.MeshBasicMaterial({ color: 0x44ff88, transparent: true, opacity: 0.1, wireframe: true });
             const torus = new THREE.Mesh(torusGeo, torusMat);
             torus.position.z = -5;
             scene.add(torus);
@@ -2319,18 +2309,13 @@
             function animate() {
                 requestAnimationFrame(animate);
                 time += 0.001;
-
                 particles.rotation.y += 0.0003;
                 particles.rotation.x += 0.0001;
-                
                 torus.rotation.x += 0.002;
                 torus.rotation.y += 0.003;
-                
-                // Gentle camera sway
-                camera.position.x = Math.sin(time * 0.08) * 0.4;
-                camera.position.y = Math.sin(time * 0.1) * 0.2;
+                camera.position.x = Math.sin(time * 0.1) * 0.5;
+                camera.position.y = Math.sin(time * 0.15) * 0.3;
                 camera.lookAt(0, 0, 0);
-
                 renderer.render(scene, camera);
             }
             animate();
@@ -2342,7 +2327,7 @@
             });
         }
 
-        // ===== GUAVA AI ASSISTANT (Puter.js + Hardcoded Fallback) =====
+        // ===== GUAVA AI ASSISTANT =====
         class Guava {
             constructor() {
                 this.isReady = false;
