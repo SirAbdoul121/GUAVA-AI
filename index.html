@@ -19,8 +19,8 @@
         }
     </script>
     
-    <!-- Puter.js -->
-    <script src="https://js.puter.com/puter.js"></script>
+    <!-- Puter.js v2 -->
+    <script src="https://js.puter.com/v2/"></script>
 
     <!-- EmailJS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -2083,7 +2083,7 @@
                         <div class="contact-info-icon"><i class="fa-solid fa-envelope"></i></div>
                         <div class="contact-info-text">
                             <h4>Email</h4>
-                            <p>m.amusa2023@gmail.com</p>
+                            <p>suliaman55019@gmail.com</p>
                         </div>
                     </div>
                     <div class="contact-info-item">
@@ -2222,7 +2222,7 @@
             <div class="footer-col">
                 <h4>Contact Info</h4>
                 <p><i class="fa-solid fa-phone"></i> +234 904 938 7070</p>
-                <p><i class="fa-solid fa-envelope"></i> m.amusa2023@gmail.com</p>
+                <p><i class="fa-solid fa-envelope"></i> suliaman55019@gmail.com</p>
                 <p><i class="fa-solid fa-user-tie"></i> CEO: Sulaiman Sa'eed Sulaiman</p>
             </div>
         </div>
@@ -2327,20 +2327,20 @@
             });
         }
 
-        // ===== GUAVA AI ASSISTANT =====
+        // ===== GUAVA AI ASSISTANT (Puter.js v2) =====
         class Guava {
             constructor() {
                 this.isReady = false;
                 this.isProcessing = false;
                 this.conversationHistory = [];
                 this.usePuter = false;
-                this.puter = null;
+                this.modelId = null;
                 
                 // Hardcoded business knowledge (fallback)
                 this.knowledge = {
                     'services': "I offer a wide range of services including: AI Development, Cyber Security, Online School, Business Consultancy, Graphics Design, Web Development, Mining Services, General Printing, and Cutting-Edge Solutions. All delivered with quality and innovation.",
                     'ceo': "The CEO of 3D Portfolio is Sulaiman Sa'eed Sulaiman, a visionary entrepreneur and full-stack developer with expertise in web development, AI integration, and immersive 3D experiences. He is the driving force behind this portfolio.",
-                    'contact': "You can reach me via email at m.amusa2023@gmail.com, or use the contact form on the website. I personally review all inquiries and respond within 24 hours.",
+                    'contact': "You can reach me via email at suliaman55019@gmail.com, or use the contact form on the website. I personally review all inquiries and respond within 24 hours.",
                     'ai': "My AI services include Machine Learning models, Natural Language Processing (NLP) chatbots, Computer Vision systems, and Predictive Analytics. I build custom AI solutions to automate and optimize your business processes.",
                     'cyber': "My Cyber Security services include Penetration Testing, Security Audits, Incident Response, and Network Security. I protect your digital assets from evolving threats.",
                     'school': "My Online School services include custom LMS development, Virtual Classrooms, Course Creation, and Student Management Systems. I help you build and manage e-learning platforms.",
@@ -2354,23 +2354,50 @@
 
             async init() {
                 try {
-                    if (typeof window.puter !== 'undefined' && window.puter.chat) {
-                        this.puter = window.puter;
-                        this.usePuter = true;
-                        this.isReady = true;
-                        document.getElementById('guava-status').textContent = '● Online (AI Mode)';
-                        document.getElementById('guava-status').style.color = '#4ade80';
-                        console.log('🐢 Guava connected to Puter.js!');
-                        return true;
+                    // Check if Puter v2 is available
+                    if (typeof puter !== 'undefined' && puter.ai) {
+                        console.log('🐢 Initializing Puter.js v2...');
+                        
+                        // Fetch available models
+                        try {
+                            const models = await puter.ai.listModels();
+                            console.log('📊 Available models:', models);
+                            
+                            if (models && models.length > 0) {
+                                // Use the first model (Claude Opus 4.8)
+                                this.modelId = models[0].id;
+                                this.usePuter = true;
+                                this.isReady = true;
+                                document.getElementById('guava-status').textContent = '● Online (AI Mode)';
+                                document.getElementById('guava-status').style.color = '#4ade80';
+                                console.log('🐢 Guava connected to Puter.js v2! Model:', this.modelId);
+                                return true;
+                            } else {
+                                console.warn('No models available from Puter. Using fallback.');
+                                this.usePuter = false;
+                                this.isReady = true;
+                                document.getElementById('guava-status').textContent = '● Online (Fallback Mode)';
+                                document.getElementById('guava-status').style.color = '#fbbf24';
+                                return true;
+                            }
+                        } catch (modelError) {
+                            console.warn('Could not fetch models from Puter. Using fallback.', modelError);
+                            this.usePuter = false;
+                            this.isReady = true;
+                            document.getElementById('guava-status').textContent = '● Online (Fallback Mode)';
+                            document.getElementById('guava-status').style.color = '#fbbf24';
+                            return true;
+                        }
                     } else {
+                        console.warn('Puter.js v2 not available. Using fallback.');
                         this.usePuter = false;
                         this.isReady = true;
                         document.getElementById('guava-status').textContent = '● Online (Fallback Mode)';
                         document.getElementById('guava-status').style.color = '#fbbf24';
-                        console.log('🐢 Guava running in fallback mode');
                         return true;
                     }
                 } catch (error) {
+                    console.warn('Error initializing Puter.js v2. Using fallback.', error);
                     this.usePuter = false;
                     this.isReady = true;
                     document.getElementById('guava-status').textContent = '● Online (Fallback Mode)';
@@ -2388,21 +2415,30 @@
 
                 let response = '';
 
-                // Try Puter.js first
-                if (this.usePuter && this.puter) {
+                // Try Puter.js v2 first
+                if (this.usePuter && this.modelId) {
                     try {
-                        const messages = [
-                            { role: 'system', content: context || "You are Guava, a helpful AI assistant for a 3D portfolio." },
-                            ...this.conversationHistory.slice(-6)
-                        ];
-                        const result = await this.puter.chat(messages);
-                        if (result && result.length > 0) {
+                        console.log('🤖 Asking Puter model:', this.modelId);
+                        
+                        const result = await puter.ai.chat({
+                            model: this.modelId,
+                            messages: [
+                                { role: 'system', content: context || "You are Guava, a helpful AI assistant for a 3D portfolio." },
+                                ...this.conversationHistory.slice(-6)
+                            ]
+                        });
+                        
+                        if (result && result.message && result.message.content) {
+                            response = result.message.content;
+                            console.log('✅ Puter response:', response.substring(0, 50) + '...');
+                        } else if (result && typeof result === 'string') {
                             response = result;
                         } else {
+                            console.warn('Unexpected Puter response format. Using fallback.');
                             response = this.getHardcodedResponse(query);
                         }
                     } catch (error) {
-                        console.log('Puter.js error, using fallback:', error);
+                        console.log('Puter.js v2 error, using fallback:', error);
                         response = this.getHardcodedResponse(query);
                     }
                 } else {
@@ -2738,7 +2774,7 @@
         // Company Information
         const COMPANY = {
             ceoName: 'Sulaiman Sa\'eed Sulaiman',
-            ceoEmail: 'm.amusa2023@gmail.com',
+            ceoEmail: 'suliaman55019@gmail.com',
             ceoPhone: '+234 904 938 7070',
             ceoTitle: 'CEO & Founder',
             companyName: '3D Portfolio',
@@ -2769,7 +2805,7 @@
             console.log('📞 Phone:', formData.phone);
             console.log('🛠️ Service:', serviceName);
 
-            // ===== 1. SEND TO CEO (m.amusa2023@gmail.com) =====
+            // ===== 1. SEND TO CEO (suliaman55019@gmail.com) =====
             console.log('📤 [1/2] Sending to CEO...');
             
             try {
